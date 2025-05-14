@@ -1,0 +1,116 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Video Stream Player</title>
+    <script src="./flv.min.js"></script>
+    <style>
+        .video-container {
+            max-width: 800px;
+            margin: 20px auto;
+            text-align: center;
+        }
+        video {
+            width: 100%;
+            height: auto;
+        }
+        .button-group {
+            margin: 10px 0;
+        }
+        .play-button, .refresh-button {
+            margin: 0 5px;
+            padding: 10px 20px;
+            font-size: 16px;
+            cursor: pointer;
+            color: white;
+            border: none;
+            border-radius: 4px;
+        }
+        .play-button {
+            background-color: #4CAF50;
+        }
+        .play-button:hover {
+            background-color: #45a049;
+        }
+        .refresh-button {
+            background-color: #2196F3;
+        }
+        .refresh-button:hover {
+            background-color: #1976D2;
+        }
+    </style>
+</head>
+<body>
+    <div class="video-container">
+        <video id="videoElement" controls></video>
+        <div class="button-group">
+            <button id="playButton" class="play-button">Start Stream</button>
+            <button id="refreshButton" class="refresh-button">Sync Latest</button>
+        </div>
+    </div>
+
+    <script>
+        if (flvjs.isSupported()) {
+            var videoElement = document.getElementById('videoElement');
+            var playButton = document.getElementById('playButton');
+            var refreshButton = document.getElementById('refreshButton');
+            
+            // Get stream name from URL parameters or use default value
+            const urlParams = new URLSearchParams(window.location.search);
+            const streamName = urlParams.get('stream') || 'demo';
+            const streamUrl = `http://localhost:8000/live/${streamName}.flv`;
+            
+            var flvPlayer = flvjs.createPlayer({
+                type: 'flv',
+                url: streamUrl,
+                isLive: true,
+                hasAudio: true,
+                hasVideo: true,
+                enableStashBuffer: false,  // 禁用缓存以减少延迟
+                stashInitialSize: 128,     // 减小初始缓存大小
+                enableWorker: true,        // 启用 Web Worker
+                lazyLoad: false,           // 禁用延迟加载
+                seekType: 'range'          // 使用 range 请求
+            });
+            
+            flvPlayer.attachMediaElement(videoElement);
+            flvPlayer.load();
+
+            playButton.addEventListener('click', function() {
+                flvPlayer.play();
+                playButton.style.display = 'none';
+            });
+
+            // 添加刷新按钮事件处理
+            refreshButton.addEventListener('click', function() {
+                // 停止当前播放
+                flvPlayer.pause();
+                // 销毁当前播放器
+                flvPlayer.unload();
+                flvPlayer.detachMediaElement();
+                flvPlayer.destroy();
+                
+                // 创建新的播放器实例
+                flvPlayer = flvjs.createPlayer({
+                    type: 'flv',
+                    url: streamUrl,
+                    isLive: true,
+                    hasAudio: true,
+                    hasVideo: true,
+                    enableStashBuffer: false,
+                    stashInitialSize: 128,
+                    enableWorker: true,
+                    lazyLoad: false,
+                    seekType: 'range'
+                });
+                
+                // 重新加载并播放
+                flvPlayer.attachMediaElement(videoElement);
+                flvPlayer.load();
+                flvPlayer.play();
+            });
+        }
+    </script>
+</body>
+</html> 

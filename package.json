@@ -2,11 +2,11 @@
   "name": "node-media-server",
   "description": "A Node.js implementation of RTMP Server",
   "version": "4.0.17",
-  "bin": "bin/app.js",
+  "bin": "demo/app.js",
   "main": "src/index.js",
   "scripts": {
-    "dev": "npx eslint;node bin/app.js",
-    "start": "node bin/app.js"
+    "dev": "npx eslint;node demo/app.js",
+    "start": "node demo/app.js"
   },
   "keywords": [
     "rtmp",
@@ -27,7 +27,8 @@
   "dependencies": {
     "cors": "^2.8.5",
     "express": "^4.21.2",
-    "http2-express": "^1.0.0"
+    "http2-express": "^1.0.0",
+    "jsonc-parser": "^3.3.1"
   },
   "engines": {
     "node": ">=18.0.0"

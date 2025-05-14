@@ -44,14 +44,24 @@ class NodeRecordSession extends BaseSession {
   run() {
     this.broadcast.postPlay(this);
     logger.info(`Record session ${this.id} ${this.streamPath} start record ${this.filePath}`);
-    Context.eventEmitter.on("donePublish", (session) => {
+    
+    // Store the listener as a class property so we can remove it later
+    this.donePublishListener = (session) => {
       if (session.streamPath === this.streamPath) {
-        this.fileStream.close();
-        this.broadcast.donePlay(this);
-        logger.info(`Record session ${this.id} ${this.streamPath} done record ${this.filePath}`);
-        Context.eventEmitter.emit("doneRecord", session);
+        // Remove the listener first to prevent multiple calls
+        Context.eventEmitter.removeListener("donePublish", this.donePublishListener);
+        
+        // Only close if not already closed
+        if (this.fileStream.writable) {
+          this.fileStream.end();  // Use end() instead of close() to ensure data is flushed
+          this.broadcast.donePlay(this);
+          logger.info(`Record session ${this.id} ${this.streamPath} done record ${this.filePath}`);
+          Context.eventEmitter.emit("doneRecord", session);
+        }
       }
-    });
+    };
+    
+    Context.eventEmitter.on("donePublish", this.donePublishListener);
   }
 
   /**

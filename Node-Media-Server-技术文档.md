@@ -336,4 +336,35 @@ verifyAuth = (authKey, session) => {
 - 同一流路径的多个观众共享广播服务器实例
 - 减少资源消耗
 
-## 录制功能详解### 1. 录制架构录制功能基于观察者模式实现：- **RecordSession**: 作为特殊的观众会话，订阅推流数据- **RecordServer**: 管理录制会话的创建和销毁- **分片机制**: 自动按时间切分录制文件### 2. 目录结构设计```recordPath/├── app1/│   ├── stream1/│   │   ├── 20241201143022_segment_001.flv│   │   ├── 20241201173022_segment_002.flv│   │   └── 20241201203022_segment_003.flv│   └── stream2/│       └── 20241201144500_segment_001.flv└── app2/    └── test/        ├── 20241201150000_segment_001.flv        └── 20241201180000_segment_002.flv```### 3. 分片轮转机制```mermaidgraph LR    A[推流开始] --> B[创建录制会话]    B --> C[创建第一个分片]    C --> D[写入数据]    D --> E{30分钟到？}    E -->|否| D    E -->|是| F[关闭当前分片]    F --> G[创建新分片]    G --> D    H[推流结束] --> I[关闭最后分片]```### 4. 配置示例```javascriptconst config = {  record: {    path: "./records",           // 录制根目录    segmentDuration: 1800        // 30分钟分片  }};```### 5. API 扩展- `stopRecord(streamPath)`: 手动停止录制- `getActiveRecords()`: 获取活跃录制列表- `stopAllRecords()`: 停止所有录制## 总结Node Media Server 采用了清晰的模块化架构：- **Core**: 提供基础设施- **Protocol**: 处理协议解析- **Session**: 管理连接会话  - **Server**: 提供服务接口推流和注册机制通过广播服务器实现了高效的 1:N 分发，支持多种协议混合使用。新增的录制功能支持按流分文件夹和自动分片，为长时间直播录制提供了完善的解决方案，具有良好的扩展性和性能。 
+## 录制功能详解### 
+
+1. 录制架构录制功能基于观察者模式实现：
+- **RecordSession**: 作为特殊的观众会话，订阅推流数据
+- **RecordServer**: 管理录制会话的创建和销毁
+- **分片机制**: 自动按时间切分录制文件
+
+### 2. 目录结构设计
+```
+recordPath/├── app1/│   ├── stream1/│   │   ├── 20241201143022_segment_001.flv│   │   ├── 20241201173022_segment_002.flv│   │   └── 20241201203022_segment_003.flv│   └── stream2/│       └── 20241201144500_segment_001.flv└── app2/    └── test/        ├── 20241201150000_segment_001.flv        └── 20241201180000_segment_002.flv
+```
+
+### 3. 分片轮转机制
+```mermaid
+graph LR    A[推流开始] --> B[创建录制会话]    B --> C[创建第一个分片]    C --> D[写入数据]    D --> E{30分钟到？}    E -->|否| D    E -->|是| F[关闭当前分片]    F --> G[创建新分片]    G --> D    H[推流结束] --> I[关闭最后分片]
+```
+
+### 4. 配置示例
+```javascript
+const config = {  record: {    path: "./records",           // 录制根目录    segmentDuration: 1800        // 30分钟分片  }};
+```
+
+### 5. API 扩展
+- `stopRecord(streamPath)`: 手动停止录制
+- `getActiveRecords()`: 获取活跃录制列表
+- `stopAllRecords()`: 停止所有录制
+
+## 总结Node Media Server 采用了清晰的模块化架构：
+- **Core**: 提供基础设施
+- **Protocol**: 处理协议解析
+- **Session**: 管理连接会话  
+- **Server**: 提供服务接口推流和注册机制通过广播服务器实现了高效的 1:N 分发，支持多种协议混合使用。新增的录制功能支持按流分文件夹和自动分片，为长时间直播录制提供了完善的解决方案，具有良好的扩展性和性能。 

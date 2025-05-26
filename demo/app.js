@@ -6,7 +6,7 @@ const path = require("path");
 const { parse } = require('jsonc-parser');
 
 // 可带注释的jsonc文件
-const jsoncContent = fs.readFileSync('demo/config2.jsonc', 'utf-8');
+const jsoncContent = fs.readFileSync('demo/config.jsonc', 'utf-8');
 const config = parse(jsoncContent);  // 解析 JSONC 内容
 
 console.log("read config: ", config);

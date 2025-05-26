@@ -13,11 +13,15 @@ const cors = require("cors");
 const logger = require("../core/logger.js");
 const http2Express = require("http2-express");
 const FlvSession = require("../session/flv_session.js");
+const StatisticsServer = require("../statistics/statistics_server.js");
 
 class NodeHttpServer {
   constructor(config) {
     this.config = config;
     const app = http2Express(express);
+
+    // 初始化统计服务器
+    this.statisticsServer = new StatisticsServer(config);
 
     if (config.static?.router && config.static?.root) {
       // @ts-ignore
@@ -26,9 +30,15 @@ class NodeHttpServer {
 
     // @ts-ignore
     app.use(cors());
+    
+    // @ts-ignore
+    app.use(express.json());
 
     // @ts-ignore
     app.all("/:app/:name.flv", this.handleFlv);
+
+    // 存储app实例供run方法使用
+    this.app = app;
 
     if (this.config.http?.port) {
       this.httpServer = http.createServer(app);
@@ -45,6 +55,17 @@ class NodeHttpServer {
   }
 
   run = () => {
+    // 启动统计服务器
+    this.statisticsServer.run();
+    
+    // 注册统计API路由
+    const statisticsApiRouter = this.statisticsServer.getApiRouter();
+    if (statisticsApiRouter) {
+      // @ts-ignore
+      this.app.use('/api/statistics', statisticsApiRouter);
+      logger.info('Statistics API endpoints registered at /api/statistics/*');
+    }
+
     this.httpServer?.listen(this.config.http.port, this.config.bind, () => {
       logger.info(`HTTP server listening on port ${this.config.bind}:${this.config.http.port}`);
     });

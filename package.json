@@ -6,7 +6,10 @@
   "main": "src/index.js",
   "scripts": {
     "dev": "npx eslint;node demo/app.js",
-    "start": "node demo/app.js"
+    "start": "node demo/app.js",
+    "test": "node test-server.js",
+    "pig-monitoring": "node test-server.js",
+    "lint": "npx eslint"
   },
   "keywords": [
     "rtmp",

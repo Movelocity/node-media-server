@@ -46,7 +46,7 @@ class StatisticsServer {
 
   /**
    * 获取API路由器（供HTTP服务器使用）
-   * @returns {express . Router|null} Express路由器
+   * @returns Express路由器
    */
   getApiRouter() {
     return this.apiRouter;

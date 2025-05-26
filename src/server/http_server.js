@@ -28,6 +28,20 @@ class NodeHttpServer {
       app.use(config.static.router, express.static(config.static.root));
     }
 
+    // 添加录制文件的静态服务
+    if (config.record?.path) {
+      // @ts-ignore
+      app.use('/records', express.static(config.record.path));
+      logger.info(`Records static server enabled at /records -> ${config.record.path}`);
+      
+      // 如果dashboard有自定义路由，也在dashboard路径下提供录制文件访问
+      if (config.static?.router && config.static.router !== '/') {
+        // @ts-ignore
+        app.use(config.static.router + '/records', express.static(config.record.path));
+        logger.info(`Records static server also enabled at ${config.static.router}/records -> ${config.record.path}`);
+      }
+    }
+
     // @ts-ignore
     app.use(cors());
     

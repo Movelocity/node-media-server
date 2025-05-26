@@ -46,20 +46,30 @@ const config = {
 const nms = new NodeMediaServer(config);
 
 // 添加事件监听器
-nms.on('postPublish', (id, StreamPath, args) => {
-  console.log(`[${new Date().toISOString()}] 🐷 养殖区 ${StreamPath} 开始推流`);
+nms.on('postPublish', (session) => {
+  console.log(`[${new Date().toISOString()}] 🐷 养殖区 ${session.streamPath} 开始推流`);
+  console.log(`  - 会话ID: ${session.id}`);
+  console.log(`  - 客户端IP: ${session.ip}`);
+  console.log(`  - 协议: ${session.protocol}`);
 });
 
-nms.on('donePublish', (id, StreamPath, args) => {
-  console.log(`[${new Date().toISOString()}] 🔴 养殖区 ${StreamPath} 停止推流`);
+nms.on('donePublish', (session) => {
+  console.log(`[${new Date().toISOString()}] 🔴 养殖区 ${session.streamPath} 停止推流`);
+  console.log(`  - 会话时长: ${((Date.now() - session.createTime) / 1000).toFixed(1)}秒`);
+  console.log(`  - 输入字节: ${session.inBytes} bytes`);
 });
 
-nms.on('postPlay', (id, StreamPath, args) => {
-  console.log(`[${new Date().toISOString()}] 👀 用户开始观看 ${StreamPath}`);
+nms.on('postPlay', (session) => {
+  console.log(`[${new Date().toISOString()}] 👀 用户开始观看 ${session.streamPath}`);
+  console.log(`  - 会话ID: ${session.id}`);
+  console.log(`  - 客户端IP: ${session.ip}`);
+  console.log(`  - 协议: ${session.protocol}`);
 });
 
-nms.on('donePlay', (id, StreamPath, args) => {
-  console.log(`[${new Date().toISOString()}] 👋 用户停止观看 ${StreamPath}`);
+nms.on('donePlay', (session) => {
+  console.log(`[${new Date().toISOString()}] 👋 用户停止观看 ${session.streamPath}`);
+  console.log(`  - 观看时长: ${((Date.now() - session.createTime) / 1000).toFixed(1)}秒`);
+  console.log(`  - 输出字节: ${session.outBytes} bytes`);
 });
 
 // 启动服务器

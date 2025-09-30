@@ -15,6 +15,7 @@ const NodeRecordServer = require("./server/record_server.js");
 const NodeNotifyServer = require("./server/notify_server.js");
 
 class NodeMediaServer {
+  // @ts-ignore
   constructor(config) {
     logger.level = "debug";
     logger.info(`Node-Media-Server v${Package.version}`);

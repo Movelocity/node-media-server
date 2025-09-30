@@ -16,6 +16,7 @@ const FlvSession = require("../session/flv_session.js");
 const StatisticsServer = require("../statistics/statistics_server.js");
 
 class NodeHttpServer {
+  // @ts-ignore
   constructor(config) {
     this.config = config;
     const app = http2Express(express);
@@ -26,6 +27,7 @@ class NodeHttpServer {
     if (config.static?.router && config.static?.root) {
       // @ts-ignore
       app.use(config.static.router, express.static(config.static.root));
+      logger.info(`Static server enabled at ${config.static.router} -> ${config.static.root}`);
     }
 
     // 添加录制文件的静态服务

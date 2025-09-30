@@ -26,7 +26,7 @@ const config = {
   // 静态文件服务配置（可选，用于serving dashboard）
   static: {
     router: '/dashboard',
-    root: './dashboard/dist'
+    root: './demo/public'
   },
 
   // 录制配置（自动保存功能）

@@ -5,8 +5,7 @@
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
   <title>Stream Monitor - Performance Analytics</title>
-  <link href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css" rel="stylesheet">
-  <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+  <link href="./lib/font-awesome.min.css" rel="stylesheet">
   <style>
     /* 动画效果 */
     @keyframes pulse {
@@ -24,264 +23,373 @@
     .status-dot {
       animation: pulse 2s infinite;
     }
+
+    /* 侧边导航栏过渡动画 */
+    .sidebar {
+      transition: width 0.3s ease;
+    }
+
+    /* 导航项激活状态 */
+    .nav-item.active {
+      background-color: #e5e7eb;
+      border-left: 4px solid #3b82f6;
+    }
+
+    .nav-item:hover {
+      background-color: #f3f4f6;
+    }
+
+    /* 折叠时的提示 */
+    .sidebar.collapsed .nav-text {
+      display: none;
+    }
+
+    .sidebar.collapsed .nav-item {
+      justify-content: center;
+    }
   </style>
   <script src="./lib/tailwind.min.js"></script>
 </head>
 
-<body class="font-sans bg-gradient-to-br from-blue-900 to-blue-700 min-h-screen text-gray-800">
-  <div class="max-w-screen-2xl mx-auto p-5">
-    <!-- Header -->
-    <div class="text-center mb-8 text-white">
-      <h1 class="text-4xl font-bold mb-2.5 drop-shadow-[2px_2px_4px_rgba(0,0,0,0.3)]">
-        <i class="fas fa-chart-line"></i> Stream Monitor
-      </h1>
-      <p class="text-lg opacity-90">实时性能监控与诊断分析</p>
-    </div>
-
-    <!-- Navigation Bar -->
-    <div class="flex justify-center gap-2.5 mb-8 flex-wrap">
-      <a href="index.html" class="px-5 py-2.5 bg-white text-blue-900 no-underline rounded-md font-semibold transition-all duration-300 flex items-center gap-2 hover:-translate-y-0.5 hover:shadow-[0_5px_15px_rgba(0,0,0,0.2)]">
-        <i class="fas fa-play"></i>
-        播放器
-      </a>
-      <a href="config.html" class="px-5 py-2.5 bg-white text-blue-900 no-underline rounded-md font-semibold transition-all duration-300 flex items-center gap-2 hover:-translate-y-0.5 hover:shadow-[0_5px_15px_rgba(0,0,0,0.2)]">
-        <i class="fas fa-cog"></i>
-        配置管理
-      </a>
-      <button class="px-5 py-2.5 bg-white text-blue-900 no-underline rounded-md font-semibold transition-all duration-300 flex items-center gap-2 hover:-translate-y-0.5 hover:shadow-[0_5px_15px_rgba(0,0,0,0.2)] border-0 cursor-pointer" id="startMonitoringBtn">
-        <i class="fas fa-play-circle"></i>
-        开始监控
-      </button>
-      <button class="px-5 py-2.5 bg-white text-blue-900 no-underline rounded-md font-semibold transition-all duration-300 flex items-center gap-2 hover:-translate-y-0.5 hover:shadow-[0_5px_15px_rgba(0,0,0,0.2)] border-0 cursor-pointer hidden" id="stopMonitoringBtn">
-        <i class="fas fa-stop-circle"></i>
-        停止监控
-      </button>
-      <button class="px-5 py-2.5 bg-white text-blue-900 no-underline rounded-md font-semibold transition-all duration-300 flex items-center gap-2 hover:-translate-y-0.5 hover:shadow-[0_5px_15px_rgba(0,0,0,0.2)] border-0 cursor-pointer" id="runDiagnosticsBtn">
-        <i class="fas fa-stethoscope"></i>
-        运行诊断
+<body class="font-sans bg-gray-100 h-screen text-gray-800 flex">
+  <!-- 左侧导航栏 -->
+  <aside id="sidebar" class="sidebar bg-white border-r border-gray-200 flex flex-col" style="width: 240px;">
+    <!-- Logo区域 -->
+    <div class="p-4 border-b border-gray-200 flex items-center justify-between">
+      <div class="flex items-center gap-3">
+        <i class="fas fa-video text-blue-600 text-xl"></i>
+        <span class="nav-text font-bold text-gray-800 text-lg">流媒体中心</span>
+      </div>
+      <button id="sidebarToggle" class="text-gray-500 hover:text-gray-700 p-1">
+        <i class="fas fa-bars"></i>
       </button>
     </div>
 
-    <!-- Performance Summary -->
-    <div class="flex justify-around bg-gradient-to-br from-indigo-500 to-purple-600 text-white p-5 rounded-xl mb-5" id="performanceSummary">
-      <div class="text-center">
-        <div class="text-3xl font-bold mb-1.5" id="uptimeValue">--</div>
-        <div class="text-sm opacity-90">运行时间</div>
+    <!-- 导航菜单 -->
+    <nav class="flex-1 p-3">
+      <div class="nav-item flex items-center gap-3 px-4 py-3 rounded-lg cursor-pointer mb-1" data-page="index.html">
+        <i class="fas fa-play-circle text-lg text-gray-600"></i>
+        <span class="nav-text text-gray-700 font-medium">播放器</span>
       </div>
-      <div class="text-center">
-        <div class="text-3xl font-bold mb-1.5" id="healthScore">--</div>
-        <div class="text-sm opacity-90">健康评分</div>
+      <div class="nav-item flex items-center gap-3 px-4 py-3 rounded-lg cursor-pointer mb-1" data-page="config.html">
+        <i class="fas fa-cog text-lg text-gray-600"></i>
+        <span class="nav-text text-gray-700 font-medium">配置管理</span>
       </div>
-      <div class="text-center">
-        <div class="text-3xl font-bold mb-1.5" id="activeConnections">--</div>
-        <div class="text-sm opacity-90">活跃连接</div>
+      <div class="nav-item active flex items-center gap-3 px-4 py-3 rounded-lg cursor-pointer mb-1" data-page="monitor.html">
+        <i class="fas fa-chart-line text-lg text-gray-600"></i>
+        <span class="nav-text text-gray-700 font-medium">性能监控</span>
+      </div>
+      
+      <!-- 分隔线 -->
+      <div class="my-3 border-t border-gray-200"></div>
+      
+      <!-- 快捷操作 -->
+      <div class="px-2 mb-2">
+        <div class="nav-text text-xs text-gray-500 font-semibold uppercase tracking-wider px-2">快捷操作</div>
+      </div>
+      <div id="quickStartBtn" class="nav-item flex items-center gap-3 px-4 py-3 rounded-lg cursor-pointer mb-1">
+        <i class="fas fa-play text-lg text-green-600"></i>
+        <span class="nav-text text-gray-700 font-medium">开始监控</span>
+      </div>
+      <div id="quickStopBtn" class="nav-item flex items-center gap-3 px-4 py-3 rounded-lg cursor-pointer mb-1 opacity-50 pointer-events-none">
+        <i class="fas fa-stop text-lg text-red-600"></i>
+        <span class="nav-text text-gray-700 font-medium">停止监控</span>
+      </div>
+      <div id="quickDiagBtn" class="nav-item flex items-center gap-3 px-4 py-3 rounded-lg cursor-pointer mb-1">
+        <i class="fas fa-stethoscope text-lg text-blue-600"></i>
+        <span class="nav-text text-gray-700 font-medium">运行诊断</span>
+      </div>
+    </nav>
+
+    <!-- 底部状态 -->
+    <div class="p-4 border-t border-gray-200">
+      <div class="flex items-center gap-3">
+        <div class="w-2 h-2 rounded-full bg-gray-400" id="monitorStatus"></div>
+        <span class="nav-text text-sm text-gray-600">监控已停止</span>
+      </div>
+    </div>
+  </aside>
+
+  <!-- 主内容区域 -->
+  <main class="flex-1 overflow-auto">
+    <!-- 顶部面包屑导航 -->
+    <div class="bg-white border-b border-gray-200 px-6 py-4">
+      <div class="flex items-center justify-between">
+        <div class="flex items-center gap-2 text-sm text-gray-600">
+          <i class="fas fa-home"></i>
+          <span class="text-gray-400">/</span>
+          <span class="font-medium text-gray-800">性能监控</span>
+        </div>
+        <div class="flex gap-2">
+          <button class="px-4 py-2 border-0 rounded-lg cursor-pointer text-sm font-medium transition-all duration-200 text-white bg-green-600 hover:bg-green-700" id="startMonitoringBtn">
+            <i class="fas fa-play-circle"></i>
+            开始监控
+          </button>
+          <button class="px-4 py-2 border-0 rounded-lg cursor-pointer text-sm font-medium transition-all duration-200 text-white bg-red-600 hover:bg-red-700 hidden" id="stopMonitoringBtn">
+            <i class="fas fa-stop-circle"></i>
+            停止监控
+          </button>
+          <button class="px-4 py-2 border-0 rounded-lg cursor-pointer text-sm font-medium transition-all duration-200 text-white bg-blue-600 hover:bg-blue-700" id="runDiagnosticsBtn">
+            <i class="fas fa-stethoscope"></i>
+            运行诊断
+          </button>
+        </div>
       </div>
     </div>
 
-    <!-- Monitor Grid -->
-    <div class="grid grid-cols-[repeat(auto-fit,minmax(300px,1fr))] gap-5 mb-5">
-      <!-- Connection Status Card -->
-      <div class="bg-white rounded-xl p-5 shadow-[0_8px_25px_rgba(0,0,0,0.15)] transition-transform duration-300 hover:-translate-y-1.5">
-        <div class="flex items-center justify-between mb-4 pb-2.5 border-b-2 border-gray-100">
-          <div class="text-lg font-semibold text-gray-800 flex items-center gap-2">
-            <i class="fas fa-wifi"></i>
-            连接状态
+    <!-- 内容区域 -->
+    <div class="p-6">
+      <!-- Performance Summary -->
+      <div class="flex justify-around bg-gradient-to-r from-blue-600 to-blue-500 text-white p-5 rounded-xl mb-5 shadow-sm" id="performanceSummary">
+        <div class="text-center">
+          <div class="text-3xl font-bold mb-1.5" id="uptimeValue">--</div>
+          <div class="text-sm opacity-90">运行时间</div>
+        </div>
+        <div class="text-center">
+          <div class="text-3xl font-bold mb-1.5" id="healthScore">--</div>
+          <div class="text-sm opacity-90">健康评分</div>
+        </div>
+        <div class="text-center">
+          <div class="text-3xl font-bold mb-1.5" id="activeConnections">--</div>
+          <div class="text-sm opacity-90">活跃连接</div>
+        </div>
+      </div>
+
+      <!-- Monitor Grid -->
+      <div class="grid grid-cols-[repeat(auto-fit,minmax(300px,1fr))] gap-5 mb-5">
+        <!-- Connection Status Card -->
+        <div class="bg-white rounded-xl p-5 shadow-sm border border-gray-200 transition-all duration-200 hover:shadow-md">
+          <div class="flex items-center justify-between mb-4 pb-2.5 border-b border-gray-200">
+            <div class="text-base font-semibold text-gray-800 flex items-center gap-2">
+              <i class="fas fa-wifi text-blue-600"></i>
+              连接状态
+            </div>
+            <div class="px-3 py-1 rounded-full text-xs font-semibold bg-green-100 text-green-800" id="connectionStatusBadge">正常</div>
           </div>
-          <div class="px-3 py-1 rounded-full text-xs font-semibold bg-green-100 text-green-800" id="connectionStatusBadge">正常</div>
+
+          <div class="flex items-center gap-2.5 px-2.5 py-2 bg-gray-50 rounded-md mb-4">
+            <div class="status-dot w-3 h-3 rounded-full bg-green-500" id="connectionDot"></div>
+            <div>
+              <div class="font-medium text-sm" id="connectionText">WebSocket 连接正常</div>
+              <div class="text-xs text-gray-600" id="connectionDetails">延迟: 12ms | 重连次数: 0</div>
+            </div>
+          </div>
+
+          <div class="grid grid-cols-2 gap-3 mb-4">
+            <div class="text-center px-3 py-2 bg-gray-50 rounded-lg border border-gray-200">
+              <div class="text-xl font-bold text-blue-600 mb-1" id="latencyValue">--</div>
+              <div class="text-xs text-gray-600 font-medium">延迟 (ms)</div>
+            </div>
+            <div class="text-center px-3 py-2 bg-gray-50 rounded-lg border border-gray-200">
+              <div class="text-xl font-bold text-blue-600 mb-1" id="reconnectCount">0</div>
+              <div class="text-xs text-gray-600 font-medium">重连次数</div>
+            </div>
+          </div>
         </div>
 
-        <div class="flex items-center gap-2.5 px-2.5 py-2 bg-gray-50 rounded-md mb-4">
-          <div class="status-dot w-3 h-3 rounded-full bg-green-500" id="connectionDot"></div>
+        <!-- Network Performance Card -->
+        <div class="bg-white rounded-xl p-5 shadow-sm border border-gray-200 transition-all duration-200 hover:shadow-md">
+          <div class="flex items-center justify-between mb-4 pb-2.5 border-b border-gray-200">
+            <div class="text-base font-semibold text-gray-800 flex items-center gap-2">
+              <i class="fas fa-network-wired text-blue-600"></i>
+              网络性能
+            </div>
+            <div class="px-3 py-1 rounded-full text-xs font-semibold bg-green-100 text-green-800" id="networkStatusBadge">优秀</div>
+          </div>
+
+          <div class="grid grid-cols-2 gap-3 mb-4">
+            <div class="text-center px-3 py-2 bg-gray-50 rounded-lg border border-gray-200">
+              <div class="text-xl font-bold text-blue-600 mb-1" id="bandwidthValue">--</div>
+              <div class="text-xs text-gray-600 font-medium">带宽 (Mbps)</div>
+            </div>
+            <div class="text-center px-3 py-2 bg-gray-50 rounded-lg border border-gray-200">
+              <div class="text-xl font-bold text-blue-600 mb-1" id="packetLoss">0%</div>
+              <div class="text-xs text-gray-600 font-medium">丢包率</div>
+            </div>
+            <div class="text-center px-3 py-2 bg-gray-50 rounded-lg border border-gray-200">
+              <div class="text-xl font-bold text-blue-600 mb-1" id="jitterValue">--</div>
+              <div class="text-xs text-gray-600 font-medium">抖动 (ms)</div>
+            </div>
+            <div class="text-center px-3 py-2 bg-gray-50 rounded-lg border border-gray-200">
+              <div class="text-xl font-bold text-blue-600 mb-1" id="throughput">--</div>
+              <div class="text-xs text-gray-600 font-medium">吞吐量</div>
+            </div>
+          </div>
+
+          <div class="relative h-[180px] mt-4">
+            <div class="absolute inset-0 flex items-center justify-center text-gray-400 text-sm chart-loading">
+              <i class="fas fa-spinner fa-spin mr-2"></i>图表加载中...
+            </div>
+            <canvas id="networkChart"></canvas>
+          </div>
+        </div>
+
+        <!-- Stream Quality Card -->
+        <div class="bg-white rounded-xl p-5 shadow-sm border border-gray-200 transition-all duration-200 hover:shadow-md">
+          <div class="flex items-center justify-between mb-4 pb-2.5 border-b border-gray-200">
+            <div class="text-base font-semibold text-gray-800 flex items-center gap-2">
+              <i class="fas fa-video text-blue-600"></i>
+              流媒体质量
+            </div>
+            <div class="px-3 py-1 rounded-full text-xs font-semibold bg-green-100 text-green-800" id="qualityStatusBadge">高清</div>
+          </div>
+
+          <div class="grid grid-cols-2 gap-3 mb-4">
+            <div class="text-center px-3 py-2 bg-gray-50 rounded-lg border border-gray-200">
+              <div class="text-xl font-bold text-blue-600 mb-1" id="bitrateValue">--</div>
+              <div class="text-xs text-gray-600 font-medium">码率 (kbps)</div>
+            </div>
+            <div class="text-center px-3 py-2 bg-gray-50 rounded-lg border border-gray-200">
+              <div class="text-xl font-bold text-blue-600 mb-1" id="fpsValue">--</div>
+              <div class="text-xs text-gray-600 font-medium">帧率 (fps)</div>
+            </div>
+            <div class="text-center px-3 py-2 bg-gray-50 rounded-lg border border-gray-200">
+              <div class="text-xl font-bold text-blue-600 mb-1" id="resolutionValue">--</div>
+              <div class="text-xs text-gray-600 font-medium">分辨率</div>
+            </div>
+            <div class="text-center px-3 py-2 bg-gray-50 rounded-lg border border-gray-200">
+              <div class="text-xl font-bold text-blue-600 mb-1" id="droppedFrames">0</div>
+              <div class="text-xs text-gray-600 font-medium">丢帧数</div>
+            </div>
+          </div>
+
+          <div class="relative h-[180px] mt-4">
+            <div class="absolute inset-0 flex items-center justify-center text-gray-400 text-sm chart-loading">
+              <i class="fas fa-spinner fa-spin mr-2"></i>图表加载中...
+            </div>
+            <canvas id="qualityChart"></canvas>
+          </div>
+        </div>
+
+        <!-- System Resources Card -->
+        <div class="bg-white rounded-xl p-5 shadow-sm border border-gray-200 transition-all duration-200 hover:shadow-md">
+          <div class="flex items-center justify-between mb-4 pb-2.5 border-b border-gray-200">
+            <div class="text-base font-semibold text-gray-800 flex items-center gap-2">
+              <i class="fas fa-microchip text-blue-600"></i>
+              系统资源
+            </div>
+            <div class="px-3 py-1 rounded-full text-xs font-semibold bg-yellow-100 text-yellow-800" id="resourceStatusBadge">适中</div>
+          </div>
+
+          <div class="grid grid-cols-2 gap-3 mb-4">
+            <div class="text-center px-3 py-2 bg-gray-50 rounded-lg border border-gray-200">
+              <div class="text-xl font-bold text-blue-600 mb-1" id="cpuUsage">--</div>
+              <div class="text-xs text-gray-600 font-medium">CPU 使用率</div>
+            </div>
+            <div class="text-center px-3 py-2 bg-gray-50 rounded-lg border border-gray-200">
+              <div class="text-xl font-bold text-blue-600 mb-1" id="memoryUsage">--</div>
+              <div class="text-xs text-gray-600 font-medium">内存使用率</div>
+            </div>
+            <div class="text-center px-3 py-2 bg-gray-50 rounded-lg border border-gray-200">
+              <div class="text-xl font-bold text-blue-600 mb-1" id="bufferLevel">--</div>
+              <div class="text-xs text-gray-600 font-medium">缓冲水平</div>
+            </div>
+            <div class="text-center px-3 py-2 bg-gray-50 rounded-lg border border-gray-200">
+              <div class="text-xl font-bold text-blue-600 mb-1" id="networkSpeed">--</div>
+              <div class="text-xs text-gray-600 font-medium">网络速度</div>
+            </div>
+          </div>
+
           <div>
-            <div class="font-semibold" id="connectionText">WebSocket 连接正常</div>
-            <div class="text-xs text-gray-600" id="connectionDetails">延迟: 12ms | 重连次数: 0</div>
+            <div class="flex justify-between text-xs mb-1.5">
+              <span class="text-gray-600">CPU</span>
+              <span id="cpuPercent" class="font-medium">0%</span>
+            </div>
+            <div class="w-full h-2 bg-gray-200 rounded overflow-hidden my-2">
+              <div class="h-full bg-gradient-to-r from-blue-500 to-green-500 transition-[width] duration-300 ease-in-out" id="cpuProgress" style="width: 0%"></div>
+            </div>
+
+            <div class="flex justify-between text-xs mb-1.5 mt-3">
+              <span class="text-gray-600">内存</span>
+              <span id="memoryPercent" class="font-medium">0%</span>
+            </div>
+            <div class="w-full h-2 bg-gray-200 rounded overflow-hidden my-2">
+              <div class="h-full bg-gradient-to-r from-blue-500 to-green-500 transition-[width] duration-300 ease-in-out" id="memoryProgress" style="width: 0%"></div>
+            </div>
           </div>
         </div>
 
-        <div class="grid grid-cols-[repeat(auto-fit,minmax(120px,1fr))] gap-4 mb-4">
-          <div class="text-center px-3 py-2 bg-gray-50 rounded-lg">
-            <div class="text-2xl font-bold text-blue-900 mb-1.5" id="latencyValue">--</div>
-            <div class="text-xs text-gray-600 font-medium">延迟 (ms)</div>
-          </div>
-          <div class="text-center px-3 py-2 bg-gray-50 rounded-lg">
-            <div class="text-2xl font-bold text-blue-900 mb-1.5" id="reconnectCount">0</div>
-            <div class="text-xs text-gray-600 font-medium">重连次数</div>
-          </div>
-        </div>
-      </div>
-
-      <!-- Network Performance Card -->
-      <div class="bg-white rounded-xl p-5 shadow-[0_8px_25px_rgba(0,0,0,0.15)] transition-transform duration-300 hover:-translate-y-1.5">
-        <div class="flex items-center justify-between mb-4 pb-2.5 border-b-2 border-gray-100">
-          <div class="text-lg font-semibold text-gray-800 flex items-center gap-2">
-            <i class="fas fa-network-wired"></i>
-            网络性能
-          </div>
-          <div class="px-3 py-1 rounded-full text-xs font-semibold bg-green-100 text-green-800" id="networkStatusBadge">优秀</div>
-        </div>
-
-        <div class="grid grid-cols-[repeat(auto-fit,minmax(120px,1fr))] gap-4 mb-4">
-          <div class="text-center px-3 py-2 bg-gray-50 rounded-lg">
-            <div class="text-2xl font-bold text-blue-900 mb-1.5" id="bandwidthValue">--</div>
-            <div class="text-xs text-gray-600 font-medium">带宽 (Mbps)</div>
-          </div>
-          <div class="text-center px-3 py-2 bg-gray-50 rounded-lg">
-            <div class="text-2xl font-bold text-blue-900 mb-1.5" id="packetLoss">0%</div>
-            <div class="text-xs text-gray-600 font-medium">丢包率</div>
-          </div>
-          <div class="text-center px-3 py-2 bg-gray-50 rounded-lg">
-            <div class="text-2xl font-bold text-blue-900 mb-1.5" id="jitterValue">--</div>
-            <div class="text-xs text-gray-600 font-medium">抖动 (ms)</div>
-          </div>
-          <div class="text-center px-3 py-2 bg-gray-50 rounded-lg">
-            <div class="text-2xl font-bold text-blue-900 mb-1.5" id="throughput">--</div>
-            <div class="text-xs text-gray-600 font-medium">吞吐量</div>
-          </div>
-        </div>
-
-        <div class="relative h-[200px] mt-4">
-          <canvas id="networkChart"></canvas>
-        </div>
-      </div>
-
-      <!-- Stream Quality Card -->
-      <div class="bg-white rounded-xl p-5 shadow-[0_8px_25px_rgba(0,0,0,0.15)] transition-transform duration-300 hover:-translate-y-1.5">
-        <div class="flex items-center justify-between mb-4 pb-2.5 border-b-2 border-gray-100">
-          <div class="text-lg font-semibold text-gray-800 flex items-center gap-2">
-            <i class="fas fa-video"></i>
-            流媒体质量
-          </div>
-          <div class="px-3 py-1 rounded-full text-xs font-semibold bg-green-100 text-green-800" id="qualityStatusBadge">高清</div>
-        </div>
-
-        <div class="grid grid-cols-[repeat(auto-fit,minmax(120px,1fr))] gap-4 mb-4">
-          <div class="text-center px-3 py-2 bg-gray-50 rounded-lg">
-            <div class="text-2xl font-bold text-blue-900 mb-1.5" id="bitrateValue">--</div>
-            <div class="text-xs text-gray-600 font-medium">码率 (kbps)</div>
-          </div>
-          <div class="text-center px-3 py-2 bg-gray-50 rounded-lg">
-            <div class="text-2xl font-bold text-blue-900 mb-1.5" id="fpsValue">--</div>
-            <div class="text-xs text-gray-600 font-medium">帧率 (fps)</div>
-          </div>
-          <div class="text-center px-3 py-2 bg-gray-50 rounded-lg">
-            <div class="text-2xl font-bold text-blue-900 mb-1.5" id="resolutionValue">--</div>
-            <div class="text-xs text-gray-600 font-medium">分辨率</div>
-          </div>
-          <div class="text-center px-3 py-2 bg-gray-50 rounded-lg">
-            <div class="text-2xl font-bold text-blue-900 mb-1.5" id="droppedFrames">0</div>
-            <div class="text-xs text-gray-600 font-medium">丢帧数</div>
-          </div>
-        </div>
-
-        <div class="relative h-[200px] mt-4">
-          <canvas id="qualityChart"></canvas>
-        </div>
-      </div>
-
-      <!-- System Resources Card -->
-      <div class="bg-white rounded-xl p-5 shadow-[0_8px_25px_rgba(0,0,0,0.15)] transition-transform duration-300 hover:-translate-y-1.5">
-        <div class="flex items-center justify-between mb-4 pb-2.5 border-b-2 border-gray-100">
-          <div class="text-lg font-semibold text-gray-800 flex items-center gap-2">
-            <i class="fas fa-microchip"></i>
-            系统资源
-          </div>
-          <div class="px-3 py-1 rounded-full text-xs font-semibold bg-yellow-100 text-yellow-800" id="resourceStatusBadge">适中</div>
-        </div>
-
-        <div class="grid grid-cols-[repeat(auto-fit,minmax(120px,1fr))] gap-4 mb-4">
-          <div class="text-center px-3 py-2 bg-gray-50 rounded-lg">
-            <div class="text-2xl font-bold text-blue-900 mb-1.5" id="cpuUsage">--</div>
-            <div class="text-xs text-gray-600 font-medium">CPU 使用率</div>
-          </div>
-          <div class="text-center px-3 py-2 bg-gray-50 rounded-lg">
-            <div class="text-2xl font-bold text-blue-900 mb-1.5" id="memoryUsage">--</div>
-            <div class="text-xs text-gray-600 font-medium">内存使用率</div>
-          </div>
-          <div class="text-center px-3 py-2 bg-gray-50 rounded-lg">
-            <div class="text-2xl font-bold text-blue-900 mb-1.5" id="bufferLevel">--</div>
-            <div class="text-xs text-gray-600 font-medium">缓冲水平</div>
-          </div>
-          <div class="text-center px-3 py-2 bg-gray-50 rounded-lg">
-            <div class="text-2xl font-bold text-blue-900 mb-1.5" id="networkSpeed">--</div>
-            <div class="text-xs text-gray-600 font-medium">网络速度</div>
-          </div>
-        </div>
-
-        <div>
-          <div class="flex justify-between text-xs mb-1.5">
-            <span>CPU</span>
-            <span id="cpuPercent">0%</span>
-          </div>
-          <div class="w-full h-2 bg-gray-200 rounded overflow-hidden my-2.5">
-            <div class="h-full bg-gradient-to-r from-blue-500 to-green-500 transition-[width] duration-300 ease-in-out" id="cpuProgress" style="width: 0%"></div>
+        <!-- Real-time Log Panel -->
+        <div class="bg-white rounded-xl p-5 shadow-sm border border-gray-200 col-span-full">
+          <div class="flex items-center justify-between mb-4 pb-2.5 border-b border-gray-200">
+            <div class="text-base font-semibold text-gray-800 flex items-center gap-2">
+              <i class="fas fa-terminal text-blue-600"></i>
+              实时日志
+            </div>
+            <div class="flex gap-2">
+              <button class="px-2 py-1.5 border-0 rounded cursor-pointer text-xs font-medium transition-all duration-200 text-white bg-green-600 hover:bg-green-700" id="pauseLogBtn">
+                <i class="fas fa-pause"></i>
+              </button>
+              <button class="px-2 py-1.5 border-0 rounded cursor-pointer text-xs font-medium transition-all duration-200 text-white bg-blue-600 hover:bg-blue-700" id="exportLogBtn">
+                <i class="fas fa-download"></i>
+              </button>
+              <button class="px-2 py-1.5 border-0 rounded cursor-pointer text-xs font-medium transition-all duration-200 text-white bg-red-600 hover:bg-red-700" id="clearLogBtn">
+                <i class="fas fa-trash"></i>
+              </button>
+            </div>
           </div>
 
-          <div class="flex justify-between text-xs mb-1.5">
-            <span>内存</span>
-            <span id="memoryPercent">0%</span>
-          </div>
-          <div class="w-full h-2 bg-gray-200 rounded overflow-hidden my-2.5">
-            <div class="h-full bg-gradient-to-r from-blue-500 to-green-500 transition-[width] duration-300 ease-in-out" id="memoryProgress" style="width: 0%"></div>
+          <div class="bg-gray-900 text-gray-100 rounded-md px-4 py-3 h-[280px] overflow-y-auto font-mono text-xs leading-relaxed" id="logContent">
+            <div class="mb-1 break-words">
+              <span class="text-gray-500 mr-2">00:00:00.000</span>
+              <span class="text-cyan-400">[INFO]</span>
+              <span>监控系统初始化完成</span>
+            </div>
           </div>
         </div>
       </div>
 
-      <!-- Real-time Log Panel -->
-      <div class="bg-white rounded-xl p-5 shadow-[0_8px_25px_rgba(0,0,0,0.15)] col-span-full max-h-[400px] overflow-hidden">
-        <div class="flex items-center justify-between mb-4 pb-2.5 border-b-2 border-gray-100">
-          <div class="text-lg font-semibold text-gray-800 flex items-center gap-2">
-            <i class="fas fa-terminal"></i>
-            实时日志
+      <!-- Diagnostic Section -->
+      <div class="bg-white rounded-xl p-5 shadow-sm border border-gray-200 mt-5 hidden" id="diagnosticSection">
+        <div class="flex items-center justify-between mb-4 pb-2.5 border-b border-gray-200">
+          <div class="text-base font-semibold text-gray-800 flex items-center gap-2">
+            <i class="fas fa-stethoscope text-blue-600"></i>
+            系统诊断报告
           </div>
-          <div class="flex gap-2.5">
-            <button class="px-1.5 py-1.5 border-0 rounded cursor-pointer text-xs font-semibold transition-all duration-300 text-white bg-green-600 hover:opacity-90 hover:scale-105" id="pauseLogBtn">
-              <i class="fas fa-pause"></i>
-            </button>
-            <button class="px-1.5 py-1.5 border-0 rounded cursor-pointer text-xs font-semibold transition-all duration-300 text-gray-800 bg-yellow-400 hover:opacity-90 hover:scale-105" id="exportLogBtn">
-              <i class="fas fa-download"></i>
-            </button>
-            <button class="px-1.5 py-1.5 border-0 rounded cursor-pointer text-xs font-semibold transition-all duration-300 text-white bg-red-600 hover:opacity-90 hover:scale-105" id="clearLogBtn">
-              <i class="fas fa-trash"></i>
-            </button>
+          <div id="diagnosticProgress" class="hidden">
+            <div class="w-[200px] h-2 bg-gray-200 rounded overflow-hidden">
+              <div class="h-full bg-gradient-to-r from-blue-500 to-green-500 transition-[width] duration-300 ease-in-out" id="diagnosticProgressBar" style="width: 0%"></div>
+            </div>
           </div>
         </div>
 
-        <div class="bg-gray-900 text-gray-100 rounded-md px-4 py-4 h-[300px] overflow-y-auto font-mono text-xs leading-relaxed" id="logContent">
-          <div class="mb-1.5 break-words">
-            <span class="text-gray-500 mr-2.5">00:00:00.000</span>
-            <span class="text-cyan-400">[INFO]</span>
-            <span>监控系统初始化完成</span>
-          </div>
+        <div class="grid grid-cols-[repeat(auto-fit,minmax(250px,1fr))] gap-4" id="diagnosticResults">
+          <!-- 诊断结果将在这里动态生成 -->
         </div>
       </div>
     </div>
+  </main>
 
-    <!-- Diagnostic Section -->
-    <div class="bg-white rounded-xl p-5 shadow-[0_8px_25px_rgba(0,0,0,0.15)] mt-5 hidden" id="diagnosticSection">
-      <div class="flex items-center justify-between mb-4 pb-2.5 border-b-2 border-gray-100">
-        <div class="text-lg font-semibold text-gray-800 flex items-center gap-2">
-          <i class="fas fa-stethoscope"></i>
-          系统诊断报告
-        </div>
-        <div id="diagnosticProgress" class="hidden">
-          <div class="w-[200px] h-2 bg-gray-200 rounded overflow-hidden">
-            <div class="h-full bg-gradient-to-r from-blue-500 to-green-500 transition-[width] duration-300 ease-in-out" id="diagnosticProgressBar" style="width: 0%"></div>
-          </div>
-        </div>
-      </div>
-
-      <div class="grid grid-cols-[repeat(auto-fit,minmax(250px,1fr))] gap-5" id="diagnosticResults">
-        <!-- 诊断结果将在这里动态生成 -->
-      </div>
-    </div>
-  </div>
-
+  <!-- 异步加载 Chart.js，不阻塞页面渲染 -->
+  <script src="https://cdn.jsdelivr.net/npm/chart.js" defer></script>
+  
   <script>
+    // 侧边栏折叠功能
+    document.getElementById('sidebarToggle').addEventListener('click', function() {
+      const sidebar = document.getElementById('sidebar');
+      if (sidebar.style.width === '240px') {
+        sidebar.style.width = '80px';
+        sidebar.classList.add('collapsed');
+      } else {
+        sidebar.style.width = '240px';
+        sidebar.classList.remove('collapsed');
+      }
+    });
+
+    // 导航项点击事件
+    document.querySelectorAll('.nav-item[data-page]').forEach(item => {
+      item.addEventListener('click', function() {
+        const page = this.dataset.page;
+        window.location.href = page;
+      });
+    });
+
     class StreamMonitor {
       constructor() {
         this.isMonitoring = false;
         this.isLogPaused = false;
         this.startTime = null;
+        this.chartsReady = false;
         this.data = {
           network: [],
           quality: [],
@@ -290,9 +398,15 @@
         this.maxDataPoints = 30;
 
         this.initializeElements();
-        this.initializeCharts();
         this.bindEvents();
-        this.log('info', '监控系统初始化完成');
+        this.log('info', '监控系统初始化中...');
+        
+        // 异步初始化图表，不阻塞页面渲染
+        requestAnimationFrame(() => {
+          this.initializeCharts().then(() => {
+            this.log('info', '监控系统初始化完成');
+          });
+        });
       }
 
       initializeElements() {
@@ -308,6 +422,10 @@
           diagnosticResults: document.getElementById('diagnosticResults'),
           diagnosticProgress: document.getElementById('diagnosticProgress'),
           diagnosticProgressBar: document.getElementById('diagnosticProgressBar'),
+          quickStartBtn: document.getElementById('quickStartBtn'),
+          quickStopBtn: document.getElementById('quickStopBtn'),
+          quickDiagBtn: document.getElementById('quickDiagBtn'),
+          monitorStatus: document.getElementById('monitorStatus'),
 
           // Performance summary
           uptimeValue: document.getElementById('uptimeValue'),
@@ -351,7 +469,15 @@
         };
       }
 
-      initializeCharts() {
+      async initializeCharts() {
+        // 等待 Chart.js 加载完成
+        while (typeof Chart === 'undefined') {
+          await new Promise(resolve => setTimeout(resolve, 50));
+        }
+        
+        // 延迟图表初始化，让页面先渲染
+        await new Promise(resolve => setTimeout(resolve, 0));
+        
         // 网络性能图表
         const networkCtx = document.getElementById('networkChart').getContext('2d');
         this.networkChart = new Chart(networkCtx, {
@@ -361,8 +487,8 @@
             datasets: [{
               label: '带宽 (Mbps)',
               data: [],
-              borderColor: '#007bff',
-              backgroundColor: 'rgba(0, 123, 255, 0.1)',
+              borderColor: '#3b82f6',
+              backgroundColor: 'rgba(59, 130, 246, 0.1)',
               tension: 0.4,
               fill: true
             }]
@@ -373,14 +499,17 @@
             scales: {
               y: {
                 beginAtZero: true,
-                grid: { color: '#e9ecef' }
+                grid: { color: '#f3f4f6' }
               },
               x: {
-                grid: { color: '#e9ecef' }
+                grid: { color: '#f3f4f6' }
               }
             },
             plugins: {
               legend: { display: false }
+            },
+            animation: {
+              duration: 0 // 禁用初始动画，加快加载
             }
           }
         });
@@ -394,8 +523,8 @@
             datasets: [{
               label: '码率 (kbps)',
               data: [],
-              borderColor: '#28a745',
-              backgroundColor: 'rgba(40, 167, 69, 0.1)',
+              borderColor: '#10b981',
+              backgroundColor: 'rgba(16, 185, 129, 0.1)',
               tension: 0.4,
               fill: true
             }]
@@ -406,16 +535,26 @@
             scales: {
               y: {
                 beginAtZero: true,
-                grid: { color: '#e9ecef' }
+                grid: { color: '#f3f4f6' }
               },
               x: {
-                grid: { color: '#e9ecef' }
+                grid: { color: '#f3f4f6' }
               }
             },
             plugins: {
               legend: { display: false }
+            },
+            animation: {
+              duration: 0 // 禁用初始动画，加快加载
             }
           }
+        });
+        
+        this.chartsReady = true;
+        
+        // 隐藏图表加载提示
+        document.querySelectorAll('.chart-loading').forEach(el => {
+          el.style.display = 'none';
         });
       }
 
@@ -426,6 +565,10 @@
         this.elements.pauseLogBtn.addEventListener('click', () => this.toggleLogPause());
         this.elements.exportLogBtn.addEventListener('click', () => this.exportLog());
         this.elements.clearLogBtn.addEventListener('click', () => this.clearLog());
+        
+        this.elements.quickStartBtn.addEventListener('click', () => this.startMonitoring());
+        this.elements.quickStopBtn.addEventListener('click', () => this.stopMonitoring());
+        this.elements.quickDiagBtn.addEventListener('click', () => this.runDiagnostics());
       }
 
       startMonitoring() {
@@ -433,6 +576,9 @@
         this.startTime = Date.now();
         this.elements.startBtn.classList.add('hidden');
         this.elements.stopBtn.classList.remove('hidden');
+        this.elements.quickStartBtn.classList.add('opacity-50', 'pointer-events-none');
+        this.elements.quickStopBtn.classList.remove('opacity-50', 'pointer-events-none');
+        this.elements.monitorStatus.className = 'w-2 h-2 rounded-full bg-green-500';
 
         this.log('success', '开始监控流媒体性能');
         this.updateMetrics();
@@ -443,6 +589,9 @@
         this.isMonitoring = false;
         this.elements.startBtn.classList.remove('hidden');
         this.elements.stopBtn.classList.add('hidden');
+        this.elements.quickStartBtn.classList.remove('opacity-50', 'pointer-events-none');
+        this.elements.quickStopBtn.classList.add('opacity-50', 'pointer-events-none');
+        this.elements.monitorStatus.className = 'w-2 h-2 rounded-full bg-gray-400';
 
         if (this.monitoringInterval) {
           clearInterval(this.monitoringInterval);
@@ -601,15 +750,18 @@
           this.data.quality.shift();
         }
 
+        // 只有在图表准备好时才更新
+        if (!this.chartsReady) return;
+
         // 更新网络图表
         this.networkChart.data.labels = this.data.timestamps;
         this.networkChart.data.datasets[0].data = this.data.network;
-        this.networkChart.update();
+        this.networkChart.update('none'); // 使用 'none' 模式避免动画延迟
 
         // 更新质量图表
         this.qualityChart.data.labels = this.data.timestamps;
         this.qualityChart.data.datasets[0].data = this.data.quality;
-        this.qualityChart.update();
+        this.qualityChart.update('none'); // 使用 'none' 模式避免动画延迟
       }
 
       async runDiagnostics() {
@@ -730,14 +882,14 @@
         }[result.status];
 
         diagnosticItem.innerHTML = `
-          <div class="flex justify-between items-center mb-2.5">
-            <div class="font-semibold text-gray-800">${name}</div>
+          <div class="flex justify-between items-center mb-2">
+            <div class="font-medium text-gray-800 text-sm">${name}</div>
             <div class="px-2 py-1 rounded text-xs font-semibold ${statusClass}">
               ${statusText}
             </div>
           </div>
-          <div class="mb-2 font-semibold">${result.message}</div>
-          <div class="text-gray-600 text-sm leading-relaxed">${result.details}</div>
+          <div class="mb-2 font-medium text-sm">${result.message}</div>
+          <div class="text-gray-600 text-xs leading-relaxed">${result.details}</div>
         `;
 
         this.elements.diagnosticResults.appendChild(diagnosticItem);
@@ -778,7 +930,7 @@
         const timestamp = new Date().toLocaleTimeString() + '.' +
           Date.now().toString().slice(-3);
         const logEntry = document.createElement('div');
-        logEntry.className = 'mb-1.5 break-words';
+        logEntry.className = 'mb-1 break-words';
 
         const colorClass = {
           'info': 'text-cyan-400',
@@ -788,7 +940,7 @@
         }[level] || 'text-gray-400';
 
         logEntry.innerHTML = `
-          <span class="text-gray-500 mr-2.5">${timestamp}</span>
+          <span class="text-gray-500 mr-2">${timestamp}</span>
           <span class="${colorClass}">[${level.toUpperCase()}]</span>
           <span>${message}</span>
         `;

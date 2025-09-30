@@ -218,31 +218,6 @@
             </div>
           </div>
 
-          <!-- Play Statistics -->
-          <div class="bg-white rounded-xl p-5 shadow-sm border border-gray-200">
-            <h3 class="text-base text-gray-800 mb-3 flex items-center gap-2 font-semibold">
-              <i class="fas fa-chart-line text-blue-600"></i> 播放统计
-            </h3>
-            <div class="grid grid-cols-2 gap-2.5">
-              <div class="bg-gray-50 px-3 py-3 rounded-lg text-center border border-gray-200">
-                <div class="text-2xl font-bold text-blue-600" id="bitrateValue">0</div>
-                <div class="text-xs text-gray-600 mt-1">码率 (kbps)</div>
-              </div>
-              <div class="bg-gray-50 px-3 py-3 rounded-lg text-center border border-gray-200">
-                <div class="text-2xl font-bold text-blue-600" id="fpsValue">0</div>
-                <div class="text-xs text-gray-600 mt-1">帧率 (fps)</div>
-              </div>
-              <div class="bg-gray-50 px-3 py-3 rounded-lg text-center border border-gray-200">
-                <div class="text-2xl font-bold text-blue-600" id="bufferValue">0</div>
-                <div class="text-xs text-gray-600 mt-1">缓冲 (ms)</div>
-              </div>
-              <div class="bg-gray-50 px-3 py-3 rounded-lg text-center border border-gray-200">
-                <div class="text-2xl font-bold text-blue-600" id="droppedValue">0</div>
-                <div class="text-xs text-gray-600 mt-1">丢帧</div>
-              </div>
-            </div>
-          </div>
-
           <!-- Debug Log -->
           <div class="bg-white rounded-xl p-5 shadow-sm border border-gray-200">
             <h3 class="text-base text-gray-800 mb-3 flex items-center gap-2 font-semibold">
@@ -291,12 +266,9 @@
         this.isPlaying = false;
         this.reconnectAttempts = 0;
         this.maxReconnectAttempts = 5;
-        this.statsInterval = null;
-        this.connectionCheckInterval = null;
 
         this.initializeElements();
         this.bindEvents();
-        this.startStatsMonitoring();
         this.log('info', '播放器初始化完成');
       }
 
@@ -320,10 +292,6 @@
           volumeDisplay: document.getElementById('volumeDisplay'),
           logContainer: document.getElementById('logContainer'),
           clearLogButton: document.getElementById('clearLogButton'),
-          bitrateValue: document.getElementById('bitrateValue'),
-          fpsValue: document.getElementById('fpsValue'),
-          bufferValue: document.getElementById('bufferValue'),
-          droppedValue: document.getElementById('droppedValue'),
           quickPlayBtn: document.getElementById('quickPlayBtn'),
           quickStopBtn: document.getElementById('quickStopBtn'),
           globalStatus: document.getElementById('globalStatus')
@@ -645,36 +613,6 @@
           this.log('success', '截图已保存');
         } catch (error) {
           this.log('error', `截图失败: ${error.message}`);
-        }
-      }
-
-      startStatsMonitoring() {
-        this.statsInterval = setInterval(() => {
-          this.updateStats();
-        }, 1000);
-      }
-
-      updateStats() {
-        if (!this.player || !this.isPlaying) {
-          return;
-        }
-
-        try {
-          const video = this.elements.video;
-
-          // 模拟统计数据（真实项目中应该从播放器获取）
-          const bitrate = Math.floor(Math.random() * 2000) + 500;
-          const fps = Math.floor(Math.random() * 30) + 15;
-          const buffer = Math.floor(Math.random() * 1000) + 100;
-          const dropped = Math.floor(Math.random() * 10);
-
-          this.elements.bitrateValue.textContent = bitrate;
-          this.elements.fpsValue.textContent = fps;
-          this.elements.bufferValue.textContent = buffer;
-          this.elements.droppedValue.textContent = dropped;
-
-        } catch (error) {
-          this.log('error', `更新统计信息失败: ${error.message}`);
         }
       }
 

@@ -57,6 +57,10 @@
     .sidebar.collapsed .nav-item {
       justify-content: center;
     }
+
+    button {
+      cursor: pointer;
+    }
   </style>
   <script src="./lib/tailwind.min.js"></script>
 </head>
@@ -253,30 +257,28 @@
           </div>
 
           <div class="mb-4">
-            <label class="block mb-1.5 font-medium text-gray-600 text-sm">服务状态检查:</label>
             <div>
               <button class="px-4 py-2.5 border-0 rounded-lg cursor-pointer text-sm font-medium transition-all duration-200 inline-flex items-center gap-2 text-white bg-orange-600 hover:bg-orange-700" id="checkServerBtn">
                 <i class="fas fa-heartbeat"></i>
-                检查服务
+                检查服务状态
               </button>
               <div id="serverStatus" class="mt-2"></div>
             </div>
           </div>
 
           <div class="mb-0">
-            <label class="block mb-1.5 font-medium text-gray-600 text-sm">生成推流命令:</label>
-            <div>
+            <div class="flex gap-2">
               <button class="px-4 py-2.5 border-0 rounded-lg cursor-pointer text-sm font-medium transition-all duration-200 inline-flex items-center gap-2 text-white bg-gray-600 hover:bg-gray-700" id="generateCmdBtn">
                 <i class="fas fa-terminal"></i>
-                生成命令
+                生成推流命令
               </button>
-            </div>
-            <div id="generatedCmd" class="mt-2 hidden">
-              <textarea id="cmdOutput" rows="4" readonly class="w-full px-3 py-2 border border-gray-300 rounded-lg font-mono text-xs mt-2 bg-gray-50"></textarea>
-              <button class="px-4 py-2.5 border-0 rounded-lg cursor-pointer text-sm font-medium transition-all duration-200 inline-flex items-center gap-2 text-white bg-gray-600 hover:bg-gray-700 mt-2" id="copyCmdBtn">
+              <button class="px-4 py-2.5 border-0 rounded-lg cursor-pointer text-sm font-medium transition-all duration-200 inline-flex items-center gap-2 text-white bg-gray-600 hover:bg-gray-700" id="copyCmdBtn">
                 <i class="fas fa-copy"></i>
                 复制
               </button>
+            </div>
+            <div id="generatedCmd" class="mt-2 hidden">
+              <textarea id="cmdOutput" rows="4" readonly class="w-full px-3 py-2 border border-gray-300 rounded-lg font-mono text-xs mt-2 bg-gray-50 min-h-48"></textarea>
             </div>
           </div>
         </div>

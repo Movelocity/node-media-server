@@ -28,6 +28,10 @@
       margin: 0 auto 10px;
     }
 
+    .fa-spin {
+      animation: spin 1s linear infinite;
+    }
+
     /* 全屏按钮hover效果 */
     .video-container:hover .fullscreen-btn {
       opacity: 1;
@@ -205,12 +209,20 @@
               </div>
             </div>
             <div class="mb-3">
-              <label for="streamInput" class="block mb-1.5 font-medium text-gray-600 text-sm">流地址/名称:</label>
-              <input type="text" id="streamInput" placeholder="demo" value="demo" class="w-full px-3 py-2 border border-gray-300 rounded-lg text-sm transition-colors duration-200 focus:outline-none focus:border-blue-500 focus:ring-2 focus:ring-blue-200">
+              <label for="streamSelect" class="block mb-1.5 font-medium text-gray-600 text-sm">选择频道:</label>
+              <div class="flex gap-2">
+                <select id="streamSelect" class="flex-1 px-3 py-2 border border-gray-300 rounded-lg text-sm transition-colors duration-200 focus:outline-none focus:border-blue-500 cursor-pointer">
+                  <option value="">正在加载...</option>
+                </select>
+                <button id="refreshStreamsBtn" class="px-3 py-1 border-1 border-gray-300 rounded-lg cursor-pointer text-sm font-medium transition-all duration-200 flex items-center gap-2 text-blue-500 hover:text-blue-600" title="刷新频道列表">
+                  <i class="fas fa-sync-alt"></i>
+                </button>
+              </div>
+              <div id="streamInfo" class="mt-2 text-xs text-gray-500 hidden"></div>
             </div>
             <div class="mb-0">
               <label for="protocolSelect" class="block mb-1.5 font-medium text-gray-600 text-sm">协议:</label>
-              <select id="protocolSelect" class="w-full px-3 py-2 border border-gray-300 rounded-lg text-sm transition-colors duration-200 focus:outline-none focus:border-blue-500 focus:ring-2 focus:ring-blue-200">
+              <select id="protocolSelect" class="w-full px-3 py-2 border border-gray-300 rounded-lg text-sm transition-colors duration-200 focus:outline-none focus:border-blue-500 cursor-pointer">
                 <option value="flv">FLV</option>
                 <option value="hls">HLS</option>
                 <option value="rtmp">RTMP</option>
@@ -266,10 +278,16 @@
         this.isPlaying = false;
         this.reconnectAttempts = 0;
         this.maxReconnectAttempts = 5;
+        this.streamRefreshInterval = null;
 
         this.initializeElements();
         this.bindEvents();
         this.log('info', '播放器初始化完成');
+        
+        // 每10秒自动刷新流列表
+        this.streamRefreshInterval = setInterval(() => {
+          this.loadAvailableStreams();
+        }, 10000);
       }
 
       initializeElements() {
@@ -280,7 +298,9 @@
           refreshButton: document.getElementById('refreshButton'),
           screenshotButton: document.getElementById('screenshotButton'),
           fullscreenBtn: document.getElementById('fullscreenBtn'),
-          streamInput: document.getElementById('streamInput'),
+          streamSelect: document.getElementById('streamSelect'),
+          streamInfo: document.getElementById('streamInfo'),
+          refreshStreamsBtn: document.getElementById('refreshStreamsBtn'),
           protocolSelect: document.getElementById('protocolSelect'),
           connectionStatus: document.getElementById('connectionStatus'),
           videoOverlay: document.getElementById('videoOverlay'),
@@ -296,6 +316,9 @@
           quickStopBtn: document.getElementById('quickStopBtn'),
           globalStatus: document.getElementById('globalStatus')
         };
+        
+        // 初始化流列表
+        this.loadAvailableStreams();
       }
 
       bindEvents() {
@@ -317,8 +340,14 @@
           this.elements.volumeDisplay.textContent = Math.round(volume * 100) + '%';
         });
 
-        this.elements.streamInput.addEventListener('input', () => {
-          this.updatePresetSelection();
+        // 流选择变化事件
+        this.elements.streamSelect.addEventListener('change', () => {
+          this.updateStreamInfo();
+        });
+
+        // 刷新流列表按钮
+        this.elements.refreshStreamsBtn.addEventListener('click', () => {
+          this.loadAvailableStreams();
         });
 
         // 质量选择器
@@ -334,19 +363,6 @@
           });
         });
 
-        // 预设流选择
-        document.querySelectorAll('.preset-btn').forEach(btn => {
-          btn.addEventListener('click', (e) => {
-            document.querySelectorAll('.preset-btn').forEach(b => {
-              b.classList.remove('active', 'bg-blue-600', 'text-white', 'border-blue-600');
-              b.classList.add('bg-white');
-            });
-            e.target.classList.add('active', 'bg-blue-600', 'text-white', 'border-blue-600');
-            e.target.classList.remove('bg-white');
-            this.elements.streamInput.value = e.target.dataset.stream;
-            this.log('info', `选择预设流: ${e.target.dataset.stream}`);
-          });
-        });
 
         // 视频事件
         this.elements.video.addEventListener('loadstart', () => this.onVideoLoadStart());
@@ -368,18 +384,25 @@
       }
 
       getStreamUrl() {
-        const streamName = this.elements.streamInput.value || 'demo';
+        const selectedOption = this.elements.streamSelect.selectedOptions[0];
+        if (!selectedOption || !selectedOption.value) {
+          this.log('error', '请选择一个频道');
+          return null;
+        }
+        
+        const streamPath = selectedOption.value; // 例如 "/live/yard-1"
+        const streamName = selectedOption.dataset.streamName || 'demo';
         const protocol = this.elements.protocolSelect.value;
 
         switch (protocol) {
           case 'flv':
-            return `/live/${streamName}.flv`;
+            return `${streamPath}.flv`;
           case 'hls':
-            return `/live/${streamName}/index.m3u8`;
+            return `${streamPath}/index.m3u8`;
           case 'rtmp':
-            return `rtmp://localhost/live/${streamName}`;
+            return `rtmp://localhost${streamPath}`;
           default:
-            return `/live/${streamName}.flv`;
+            return `${streamPath}.flv`;
         }
       }
 
@@ -398,6 +421,9 @@
           }
 
           const streamUrl = this.getStreamUrl();
+          if (!streamUrl) {
+            throw new Error('请选择一个有效的频道');
+          }
           this.log('info', `连接地址: ${streamUrl}`);
 
           this.player = flvjs.createPlayer({
@@ -616,17 +642,115 @@
         }
       }
 
-      updatePresetSelection() {
-        const currentValue = this.elements.streamInput.value;
-        document.querySelectorAll('.preset-btn').forEach(btn => {
-          if (btn.dataset.stream === currentValue) {
-            btn.classList.add('active', 'bg-blue-600', 'text-white', 'border-blue-600');
-            btn.classList.remove('bg-white');
-          } else {
-            btn.classList.remove('active', 'bg-blue-600', 'text-white', 'border-blue-600');
-            btn.classList.add('bg-white');
+      /**
+       * 加载可用的流列表
+       */
+      async loadAvailableStreams() {
+        try {
+          // 添加刷新按钮的旋转动画
+          const refreshIcon = this.elements.refreshStreamsBtn.querySelector('i');
+          refreshIcon.classList.add('fa-spin');
+          
+          const response = await fetch('/api/statistics/streams');
+          const result = await response.json();
+          
+          if (!result.success) {
+            throw new Error(result.message || '获取频道列表失败');
           }
+          
+          const streams = result.data || [];
+          const currentSelection = this.elements.streamSelect.value;
+          
+          this.renderStreamOptions(streams);
+          
+          // 尝试保持之前的选择
+          if (currentSelection && this.elements.streamSelect.querySelector(`option[value="${currentSelection}"]`)) {
+            this.elements.streamSelect.value = currentSelection;
+            this.updateStreamInfo();
+          }
+          
+          this.log('success', `已加载 ${streams.length} 个频道`);
+          
+          // 移除旋转动画
+          setTimeout(() => {
+            refreshIcon.classList.remove('fa-spin');
+          }, 500);
+        } catch (error) {
+          this.log('error', `加载频道列表失败: ${error.message}`);
+          this.elements.streamSelect.innerHTML = '<option value="">加载失败，请刷新重试</option>';
+          
+          // 移除旋转动画
+          const refreshIcon = this.elements.refreshStreamsBtn.querySelector('i');
+          refreshIcon.classList.remove('fa-spin');
+        }
+      }
+
+      /**
+       * 渲染流选项
+       */
+      renderStreamOptions(streams) {
+        if (streams.length === 0) {
+          this.elements.streamSelect.innerHTML = '<option value="">暂无可用频道</option>';
+          return;
+        }
+        
+        // 按状态排序：在线的在前
+        streams.sort((a, b) => {
+          if (a.status === 'online' && b.status !== 'online') return -1;
+          if (a.status !== 'online' && b.status === 'online') return 1;
+          return a.name.localeCompare(b.name);
         });
+        
+        this.elements.streamSelect.innerHTML = streams.map(stream => {
+          const statusIcon = stream.status === 'online' ? '🟢' : '⚫';
+          const disabled = stream.status !== 'online' ? 'disabled' : '';
+          const label = `${statusIcon} ${stream.name} ${stream.status === 'online' ? `` : '(离线)'}`;
+          
+          return `<option value="${stream.id}" 
+                         data-stream-name="${stream.name}"
+                         data-status="${stream.status}"
+                         data-viewers="${stream.viewers}"
+                         data-bitrate="${stream.bitrate}"
+                         data-uptime="${stream.uptime}"
+                         ${disabled}>${label}</option>`;
+        }).join('');
+        
+        // 自动选择第一个在线的流
+        const firstOnline = streams.find(s => s.status === 'online');
+        if (firstOnline) {
+          this.elements.streamSelect.value = firstOnline.id;
+          this.updateStreamInfo();
+        }
+      }
+
+      /**
+       * 更新流信息显示
+       */
+      updateStreamInfo() {
+        const selectedOption = this.elements.streamSelect.selectedOptions[0];
+        if (!selectedOption || !selectedOption.value) {
+          this.elements.streamInfo.classList.add('hidden');
+          return;
+        }
+        
+        const status = selectedOption.dataset.status;
+        const viewers = selectedOption.dataset.viewers;
+        const bitrate = selectedOption.dataset.bitrate;
+        const uptime = selectedOption.dataset.uptime;
+        
+        if (status === 'online') {
+          this.elements.streamInfo.innerHTML = `
+            <i class="fas fa-info-circle"></i> 
+            📡 ${bitrate} | 👥 ${viewers} clients | ⏱️ ${uptime}
+          `;
+          this.elements.streamInfo.classList.remove('hidden');
+        } else {
+          this.elements.streamInfo.innerHTML = `
+            <i class="fas fa-exclamation-triangle"></i> 
+            该频道当前离线
+          `;
+          this.elements.streamInfo.classList.remove('hidden');
+        }
       }
 
       log(type, message) {
